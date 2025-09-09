@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Simple Calculator</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #0f1724;
+      font-family: Arial, sans-serif;
+    }
+    .calculator {
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    .display {
+      width: 100%;
+      height: 60px;
+      margin-bottom: 15px;
+      background: #0f1724;
+      color: #fff;
+      text-align: right;
+      font-size: 24px;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+    }
+    .keys {
+      display: grid;
+      grid-template-columns: repeat(4, 70px);
+      gap: 10px;
+    }
+    button {
+      height: 60px;
+      border: none;
+      border-radius: 8px;
+      font-size: 20px;
+      cursor: pointer;
+      background: #334155;
+      color: #fff;
+      transition: background 0.2s;
+    }
+    button:hover { background: #475569; }
+    .op { background: #7c5cff; }
+    .op:hover { background: #6b4ee6; }
+    .wide { grid-column: span 2; }
+    .footer { margin-top: 12px; color: #9fb0d6; font-size: 13px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="calculator">
+    <input type="text" id="display" class="display" readonly aria-label="Calculator display" />
+    <div class="keys">
+      <button onclick="clearDisplay()">C</button>
+      <button onclick="deleteChar()">DEL</button>
+      <button class="op" onclick="appendChar('%')">%</button>
+      <button class="op" onclick="appendChar('/')">÷</button>
+
+      <button onclick="appendChar('7')">7</button>
+      <button onclick="appendChar('8')">8</button>
+      <button onclick="appendChar('9')">9</button>
+      <button class="op" onclick="appendChar('*')">×</button>
+
+      <button onclick="appendChar('4')">4</button>
+      <button onclick="appendChar('5')">5</button>
+      <button onclick="appendChar('6')">6</button>
+      <button class="op" onclick="appendChar('-')">−</button>
+
+      <button onclick="appendChar('1')">1</button>
+      <button onclick="appendChar('2')">2</button>
+      <button onclick="appendChar('3')">3</button>
+      <button class="op" onclick="appendChar('+')">+</button>
+
+      <button class="wide" onclick="appendChar('0')">0</button>
+      <button onclick="appendChar('.')">.</button>
+      <button class="op" onclick="calculate()">=</button>
+    </div>
+    <div class="footer">Try: 2 + 3 =  (or use keyboard: numbers, + - * /, Enter, Backspace)</div>
+  </div>
+
+  <script>
+    const display = document.getElementById('display');
+
+    function appendChar(char) {
+      const operators = ['+', '-', '*', '/'];
+      const last = display.value.slice(-1);
+
+      // if operator pressed
+      if (operators.includes(char)) {
+        // don't allow operator first except minus for negative
+        if (display.value === '' && char !== '-') return;
+        // if last is operator, replace it (so ++ or +- becomes +)
+        if (operators.includes(last)) {
+          display.value = display.value.slice(0, -1) + char;
+          return;
+        }
+      }
+
+      // decimal handling: prevent multiple decimals in the same number
+      if (char === '.') {
+        // get the current number (after last operator)
+        const parts = display.value.split(/\+|\-|\*|\//);
+        const cur = parts[parts.length - 1];
+        if (cur.includes('.')) return; // already has a decimal
+        if (cur === '') display.value += '0';
+      }
+
+      display.value += char;
+    }
+
+    function clearDisplay() { display.value = ''; }
+    function deleteChar() { display.value = display.value.slice(0, -1); }
+
+    function normalize(expr) {
+      if(!expr) return '';
+      // replace any unicode symbols just in case
+      expr = expr.replace(/×/g, '*').replace(/÷/g, '/');
+      // handle percent: convert 50% to (50/100)
+      expr = expr.replace(/(\d+\.?\d*)%/g, '($1/100)');
+      // remove whitespace
+      expr = expr.replace(/\s+/g, '');
+      // strip trailing operators/dots
+      expr = expr.replace(/[+\-*/.]+$/, '');
+      return expr;
+    }
+
+    function safeEval(raw) {
+      const expr = normalize(raw);
+      if (!expr) throw new Error('Nothing to evaluate');
+      // only allow digits, operators, parentheses and dots
+      if (/[^0-9+\-*/().]/.test(expr)) throw new Error('Invalid characters');
+      return Function('"use strict"; return (' + expr + ')')();
+    }
+
+    function calculate() {
+      try {
+        const result = safeEval(display.value);
+        if (result === undefined || Number.isNaN(result)) throw new Error('Invalid result');
+        display.value = String(result);
+      } catch (e) {
+        display.value = 'Error';
+        setTimeout(() => clearDisplay(), 900);
+      }
+    }
+
+    // keyboard support
+    window.addEventListener('keydown', (e) => {
+      if ((e.key >= '0' && e.key <= '9') || ['+','-','*','/','.','%'].includes(e.key)) {
+        appendChar(e.key);
+        e.preventDefault();
+        return;
+      }
+      if (e.key === 'Enter') { calculate(); e.preventDefault(); return; }
+      if (e.key === 'Backspace') { deleteChar(); e.preventDefault(); return; }
+      if (e.key === 'Escape') { clearDisplay(); e.preventDefault(); return; }
+    });
+
+    // initialize
+    clearDisplay();
+  </script>
+</body>
+</html><!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Simple Calculator</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #0f1724;
+      font-family: Arial, sans-serif;
+    }
+    .calculator {
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    .display {
+      width: 100%;
+      height: 60px;
+      margin-bottom: 15px;
+      background: #0f1724;
+      color: #fff;
+      text-align: right;
+      font-size: 24px;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+    }
+    .keys {
+      display: grid;
+      grid-template-columns: repeat(4, 70px);
+      gap: 10px;
+    }
+    button {
+      height: 60px;
+      border: none;
+      border-radius: 8px;
+      font-size: 20px;
+      cursor: pointer;
+      background: #334155;
+      color: #fff;
+      transition: background 0.2s;
+    }
+    button:hover { background: #475569; }
+    .op { background: #7c5cff; }
+    .op:hover { background: #6b4ee6; }
+    .wide { grid-column: span 2; }
+    .footer { margin-top: 12px; color: #9fb0d6; font-size: 13px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="calculator">
+    <input type="text" id="display" class="display" readonly aria-label="Calculator display" />
+    <div class="keys">
+      <button onclick="clearDisplay()">C</button>
+      <button onclick="deleteChar()">DEL</button>
+      <button class="op" onclick="appendChar('%')">%</button>
+      <button class="op" onclick="appendChar('/')">÷</button>
+
+      <button onclick="appendChar('7')">7</button>
+      <button onclick="appendChar('8')">8</button>
+      <button onclick="appendChar('9')">9</button>
+      <button class="op" onclick="appendChar('*')">×</button>
+
+      <button onclick="appendChar('4')">4</button>
+      <button onclick="appendChar('5')">5</button>
+      <button onclick="appendChar('6')">6</button>
+      <button class="op" onclick="appendChar('-')">−</button>
+
+      <button onclick="appendChar('1')">1</button>
+      <button onclick="appendChar('2')">2</button>
+      <button onclick="appendChar('3')">3</button>
+      <button class="op" onclick="appendChar('+')">+</button>
+
+      <button class="wide" onclick="appendChar('0')">0</button>
+      <button onclick="appendChar('.')">.</button>
+      <button class="op" onclick="calculate()">=</button>
+    </div>
+    <div class="footer">Try: 2 + 3 =  (or use keyboard: numbers, + - * /, Enter, Backspace)</div>
+  </div>
+
+  <script>
+    const display = document.getElementById('display');
+
+    function appendChar(char) {
+      const operators = ['+', '-', '*', '/'];
+      const last = display.value.slice(-1);
+
+      // if operator pressed
+      if (operators.includes(char)) {
+        // don't allow operator first except minus for negative
+        if (display.value === '' && char !== '-') return;
+        // if last is operator, replace it (so ++ or +- becomes +)
+        if (operators.includes(last)) {
+          display.value = display.value.slice(0, -1) + char;
+          return;
+        }
+      }
+
+      // decimal handling: prevent multiple decimals in the same number
+      if (char === '.') {
+        // get the current number (after last operator)
+        const parts = display.value.split(/\+|\-|\*|\//);
+        const cur = parts[parts.length - 1];
+        if (cur.includes('.')) return; // already has a decimal
+        if (cur === '') display.value += '0';
+      }
+
+      display.value += char;
+    }
+
+    function clearDisplay() { display.value = ''; }
+    function deleteChar() { display.value = display.value.slice(0, -1); }
+
+    function normalize(expr) {
+      if(!expr) return '';
+      // replace any unicode symbols just in case
+      expr = expr.replace(/×/g, '*').replace(/÷/g, '/');
+      // handle percent: convert 50% to (50/100)
+      expr = expr.replace(/(\d+\.?\d*)%/g, '($1/100)');
+      // remove whitespace
+      expr = expr.replace(/\s+/g, '');
+      // strip trailing operators/dots
+      expr = expr.replace(/[+\-*/.]+$/, '');
+      return expr;
+    }
+
+    function safeEval(raw) {
+      const expr = normalize(raw);
+      if (!expr) throw new Error('Nothing to evaluate');
+      // only allow digits, operators, parentheses and dots
+      if (/[^0-9+\-*/().]/.test(expr)) throw new Error('Invalid characters');
+      return Function('"use strict"; return (' + expr + ')')();
+    }
+
+    function calculate() {
+      try {
+        const result = safeEval(display.value);
+        if (result === undefined || Number.isNaN(result)) throw new Error('Invalid result');
+        display.value = String(result);
+      } catch (e) {
+        display.value = 'Error';
+        setTimeout(() => clearDisplay(), 900);
+      }
+    }
+
+    // keyboard support
+    window.addEventListener('keydown', (e) => {
+      if ((e.key >= '0' && e.key <= '9') || ['+','-','*','/','.','%'].includes(e.key)) {
+        appendChar(e.key);
+        e.preventDefault();
+        return;
+      }
+      if (e.key === 'Enter') { calculate(); e.preventDefault(); return; }
+      if (e.key === 'Backspace') { deleteChar(); e.preventDefault(); return; }
+      if (e.key === 'Escape') { clearDisplay(); e.preventDefault(); return; }
+    });
+
+    // initialize
+    clearDisplay();
+  </script>
+</body>
+</html>
